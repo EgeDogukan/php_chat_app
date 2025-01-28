@@ -104,6 +104,63 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "Messages",
+            "item": [
+                {
+                    "name": "Send Message",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_id\": 1,\n    \"content\": \"Hello, everyone!\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/groups/1/messages",
+                            "host": ["{{base_url}}"],
+                            "path": ["groups", "1", "messages"]
+                        },
+                        "description": "Send a message to a group"
+                    }
+                },
+                {
+                    "name": "Get Group Messages",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{base_url}}/groups/1/messages",
+                            "host": ["{{base_url}}"],
+                            "path": ["groups", "1", "messages"]
+                        },
+                        "description": "Get all messages from a group"
+                    }
+                },
+                {
+                    "name": "Get New Messages",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{base_url}}/groups/1/messages/since/2024-03-20 10:00:00",
+                            "host": ["{{base_url}}"],
+                            "path": [
+                                "groups",
+                                "1",
+                                "messages",
+                                "since",
+                                "2024-03-20 10:00:00"
+                            ]
+                        },
+                        "description": "Get messages newer than the specified timestamp"
+                    }
+                }
+            ]
         }
     ],
     "variable": [
