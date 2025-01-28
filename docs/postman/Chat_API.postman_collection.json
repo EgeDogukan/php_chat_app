@@ -43,6 +43,67 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "Groups",
+            "item": [
+                {
+                    "name": "Create Group",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"General Chat\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/groups",
+                            "host": ["{{base_url}}"],
+                            "path": ["groups"]
+                        },
+                        "description": "Create a new chat group"
+                    }
+                },
+                {
+                    "name": "Join Group",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_id\": 1\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/groups/1/join",
+                            "host": ["{{base_url}}"],
+                            "path": ["groups", "1", "join"]
+                        },
+                        "description": "Join a chat group"
+                    }
+                },
+                {
+                    "name": "Get Group Members",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{base_url}}/groups/1/members",
+                            "host": ["{{base_url}}"],
+                            "path": ["groups", "1", "members"]
+                        },
+                        "description": "Get all members of a group"
+                    }
+                }
+            ]
         }
     ],
     "variable": [

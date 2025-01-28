@@ -3,7 +3,9 @@
 use DI\Container;
 use Slim\Factory\AppFactory;
 use App\Models\User;
+use App\Models\Group;
 use App\Controllers\UserController;
+use App\Controllers\GroupController;
 use Dotenv\Dotenv;
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -21,12 +23,22 @@ $container->set('db', function() {
     return $pdo;
 });
 
+// models
 $container->set(User::class, function($container) {
     return new User($container->get('db'));
 });
 
+$container->set(Group::class, function($container) {
+    return new Group($container->get('db'));
+});
+
+// controllers
 $container->set(UserController::class, function($container) {
     return new UserController($container->get(User::class));
+});
+
+$container->set(GroupController::class, function($container) {
+    return new GroupController($container->get(Group::class));
 });
 
 AppFactory::setContainer($container);
@@ -43,5 +55,10 @@ $app->get('/', function ($request, $response) {
 // user routes
 $app->post('/users', [UserController::class, 'create']);
 $app->get('/users/{id}', [UserController::class, 'get']);
+
+// group routes
+$app->post('/groups', [GroupController::class, 'create']);
+$app->post('/groups/{id}/join', [GroupController::class, 'join']);
+$app->get('/groups/{id}/members', [GroupController::class, 'getMembers']);
 
 $app->run(); 
