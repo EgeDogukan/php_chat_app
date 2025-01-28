@@ -82,16 +82,28 @@ class Message
     }
 
     // returns messages from a group
-    // returns array of messages if group exists
+    // returns array of messages if group exists and user is a member
+    // returns 'not_member' if user is not a member
     // returns null if group doesn't exist
     // returns false on error
-    public function getByGroupId(int $groupId): ?array
+    public function getByGroupId(int $groupId, int $userId): array|string|null|false
     {
         try {
-            $stmt = $this->db->prepare('SELECT id FROM groups WHERE id = :id');
-            $stmt->execute(['id' => $groupId]);
+            // check if group exists and user is a member
+            $stmt = $this->db->prepare('
+                SELECT 1 FROM group_members 
+                WHERE group_id = :group_id AND user_id = :user_id
+            ');
+            $stmt->execute([
+                'group_id' => $groupId,
+                'user_id' => $userId
+            ]);
+            
             if (!$stmt->fetch()) {
-                return null;
+                // check if group exists at all
+                $stmt = $this->db->prepare('SELECT 1 FROM groups WHERE id = :id');
+                $stmt->execute(['id' => $groupId]);
+                return $stmt->fetch() ? 'not_member' : null;
             }
 
             $stmt = $this->db->prepare('
@@ -110,13 +122,25 @@ class Message
         }
     }
 
-    public function getByGroupIdAfterTimestamp(int $groupId, string $timestamp): ?array
+    // an optimized version of getByGroup that only returns messages newer than the specified timestamp
+    public function getByGroupIdAfterTimestamp(int $groupId, int $userId, string $timestamp): array|string|null|false
     {
         try {
-            $stmt = $this->db->prepare('SELECT id FROM groups WHERE id = :id');
-            $stmt->execute(['id' => $groupId]);
+            // check if group exists and user is a member
+            $stmt = $this->db->prepare('
+                SELECT 1 FROM group_members 
+                WHERE group_id = :group_id AND user_id = :user_id
+            ');
+            $stmt->execute([
+                'group_id' => $groupId,
+                'user_id' => $userId
+            ]);
+            
             if (!$stmt->fetch()) {
-                return null;
+                // check if group exists at all
+                $stmt = $this->db->prepare('SELECT 1 FROM groups WHERE id = :id');
+                $stmt->execute(['id' => $groupId]);
+                return $stmt->fetch() ? 'not_member' : null;
             }
 
             $stmt = $this->db->prepare('

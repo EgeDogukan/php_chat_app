@@ -62,11 +62,26 @@ class MessageController
 
     public function getByGroup(Request $request, Response $response, array $args): Response
     {
-        $messages = $this->messageModel->getByGroupId((int) $args['id']);
+        $data = $request->getQueryParams();
+        
+        if (!isset($data['user_id']) || !is_numeric($data['user_id'])) {
+            $response->getBody()->write(json_encode(['error' => 'Valid user_id is required']));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
+
+        $messages = $this->messageModel->getByGroupId(
+            (int) $args['id'],
+            (int) $data['user_id']
+        );
 
         if ($messages === null) {
             $response->getBody()->write(json_encode(['error' => 'Group not found']));
             return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+        }
+
+        if ($messages === 'not_member') {
+            $response->getBody()->write(json_encode(['error' => 'User is not a member of this group']));
+            return $response->withStatus(403)->withHeader('Content-Type', 'application/json');
         }
 
         if ($messages === false) {
@@ -81,6 +96,13 @@ class MessageController
     // an optimized version of getByGroup that only returns messages newer than the specified timestamp
     public function getNewMessages(Request $request, Response $response, array $args): Response
     {
+        $data = $request->getQueryParams();
+        
+        if (!isset($data['user_id']) || !is_numeric($data['user_id'])) {
+            $response->getBody()->write(json_encode(['error' => 'Valid user_id is required']));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
+
         $timestamp = urldecode($args['timestamp']);
         
         // we don't want to query the database if the timestamp is in the future
@@ -99,12 +121,18 @@ class MessageController
 
         $messages = $this->messageModel->getByGroupIdAfterTimestamp(
             (int) $args['id'],
+            (int) $data['user_id'],
             $timestamp
         );
 
         if ($messages === null) {
             $response->getBody()->write(json_encode(['error' => 'Group not found']));
             return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+        }
+
+        if ($messages === 'not_member') {
+            $response->getBody()->write(json_encode(['error' => 'User is not a member of this group']));
+            return $response->withStatus(403)->withHeader('Content-Type', 'application/json');
         }
 
         if ($messages === false) {
