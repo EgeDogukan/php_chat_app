@@ -22,17 +22,14 @@ class UserController
         // validate and create user
         
         if (!isset($data['username']) || trim($data['username']) === '') {
-            $response->getBody()->write(json_encode([
-                'error' => 'Username is required'
-            ]));
+            $response->getBody()->write(json_encode(['error' => 'Username is required']));
             return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
         }
+        
         $user = $this->userModel->create($data['username']);
         
         if (!$user) {
-            $response->getBody()->write(json_encode([
-                'error' => 'Username already exists'
-            ]));
+            $response->getBody()->write(json_encode(['error' => 'Username already exists']));
             return $response->withStatus(409)->withHeader('Content-Type', 'application/json');
         }
 
@@ -45,9 +42,7 @@ class UserController
         $user = $this->userModel->getById((int) $args['id']);
         
         if (!$user) {
-            $response->getBody()->write(json_encode([
-                'error' => 'User not found'
-            ]));
+            $response->getBody()->write(json_encode(['error' => 'User not found']));
             return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
         }
 

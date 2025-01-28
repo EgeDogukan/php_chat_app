@@ -32,7 +32,10 @@ class User
             ];
         } catch (\PDOException $e) {
             // username already exists or other database error
-            return false;
+            if ($e->getCode() === '23000' || $e->getCode() === 19) {
+                return false;
+            }
+            throw $e;
         }
     }
     
