@@ -2,13 +2,17 @@
 
 namespace App\Models;
 
+use App\Services\RedisService;
+
 class Message
 {
     private $db;
+    private $redis;
     
-    public function __construct(\PDO $db)
+    public function __construct(\PDO $db, RedisService $redis)
     {
         $this->db = $db;
+        $this->redis = $redis;
     }
     
     // creates a new message in a group
@@ -67,6 +71,8 @@ class Message
             $messageId = $this->db->lastInsertId();
             $this->db->commit();
 
+            $this->redis->set("group:{$groupId}:messages", null);
+
             return [
                 'id' => $messageId,
                 'group_id' => $groupId,
@@ -106,6 +112,12 @@ class Message
                 return $stmt->fetch() ? 'not_member' : null;
             }
 
+            // trying cache first if not normal db query
+            $cachedMessages = $this->redis->getCachedGroupMessages($groupId);
+            if ($cachedMessages !== null) {
+                return $cachedMessages;
+            }
+
             $stmt = $this->db->prepare('
                 SELECT m.id, m.content, m.created_at,
                        u.id as user_id, u.username
@@ -116,7 +128,12 @@ class Message
             ');
             
             $stmt->execute(['group_id' => $groupId]);
-            return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $messages = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // cache the messages
+            $this->redis->cacheGroupMessages($groupId, $messages);
+
+            return $messages;
         } catch (\PDOException $e) {
             return false;
         }

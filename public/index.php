@@ -9,6 +9,8 @@ use App\Controllers\GroupController;
 use App\Controllers\MessageController;
 use App\Models\Message;
 use Dotenv\Dotenv;
+use App\Services\RedisService;
+use App\Middleware\RateLimitMiddleware;
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -25,6 +27,20 @@ $container->set('db', function() {
     return $pdo;
 });
 
+// adding redis 
+$container->set(RedisService::class, function() {
+    return new RedisService(
+        $_ENV['REDIS_HOST'] ?? '127.0.0.1',
+        (int) ($_ENV['REDIS_PORT'] ?? 6379),
+        $_ENV['REDIS_PREFIX'] ?? 'chat:'
+    );
+});
+
+// adding redis middleware
+$container->set(RateLimitMiddleware::class, function($c) {
+    return new RateLimitMiddleware($c->get(RedisService::class));
+});
+
 // models
 $container->set(User::class, function($container) {
     return new User($container->get('db'));
@@ -35,7 +51,10 @@ $container->set(Group::class, function($container) {
 });
 
 $container->set(Message::class, function($container) {
-    return new Message($container->get('db'));
+    return new Message(
+        $container->get('db'),
+        $container->get(RedisService::class)
+    );
 });
 
 // controllers
@@ -72,8 +91,8 @@ $app->post('/groups/{id}/join', [GroupController::class, 'join']);
 $app->get('/groups/{id}/members', [GroupController::class, 'getMembers']);
 
 // message routes
-$app->post('/groups/{id}/messages', [MessageController::class, 'create']);
 $app->get('/groups/{id}/messages', [MessageController::class, 'getByGroup']);
 $app->get('/groups/{id}/messages/since/{timestamp}', [MessageController::class, 'getNewMessages']);
+$app->post('/groups/{id}/messages', [MessageController::class, 'create'])->add(RateLimitMiddleware::class);
 
 $app->run(); 
