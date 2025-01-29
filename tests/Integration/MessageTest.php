@@ -7,6 +7,7 @@ use PDO;
 use App\Models\Message;
 use App\Models\User;
 use App\Models\Group;
+use App\Services\RedisService;
 use Tests\TestDatabaseInitializer;
 
 class MessageTest extends TestCase
@@ -15,6 +16,7 @@ class MessageTest extends TestCase
     private $message;
     private $user;
     private $group;
+    private $redis;
 
     protected function setUp(): void
     {
@@ -22,7 +24,14 @@ class MessageTest extends TestCase
         $initializer = new TestDatabaseInitializer($this->db);
         $initializer->initialize();
         
-        $this->message = new Message($this->db);
+        // init redis with test prefix to avoid conflicts with other tests
+        $this->redis = new RedisService(
+            '127.0.0.1',
+            6379,
+            'test:chat:'
+        );
+        
+        $this->message = new Message($this->db, $this->redis);
         $this->user = new User($this->db);
         $this->group = new Group($this->db);
     }
